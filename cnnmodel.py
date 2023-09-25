@@ -7,7 +7,7 @@
 @FileName: cnnmodel.py
 @Software: PyCharm
 """
-
+import torch
 import torch.nn as nn
 class CNN(nn.Module):
     def __init__(self,sample_num):
@@ -54,9 +54,6 @@ class CNN(nn.Module):
         x = self.fc(x)
         return x
 
-import torch
-
-
 class Bottlrneck(torch.nn.Module):
     def __init__(self,In_channel,Med_channel,Out_channel,downsample=False):
         super(Bottlrneck, self).__init__()
@@ -90,7 +87,7 @@ class Bottlrneck(torch.nn.Module):
 
 
 class ResNet(torch.nn.Module):
-    def __init__(self,in_channels=1,classes=13):
+    def __init__(self,in_channels=1,classes=9):
         super(ResNet, self).__init__()
         self.features = torch.nn.Sequential(
             torch.nn.Conv1d(in_channels,64,kernel_size=7,stride=2,padding=3),
@@ -118,13 +115,12 @@ class ResNet(torch.nn.Module):
 
             torch.nn.AdaptiveAvgPool1d(1)
         )
-        self.classifer = torch.nn.Sequential(
-            torch.nn.Linear(2048,classes)
-        )
+        self.fc =  torch.nn.Linear(2048,classes)
+
 
     def forward(self,x):
         x = torch.unsqueeze(x,-2)
         x = self.features(x)
         x = x.view(-1,2048)
-        x = self.classifer(x)
+        x = self.fc(x)
         return x

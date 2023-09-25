@@ -14,12 +14,13 @@ parser = argparse.ArgumentParser(description='Incremental Learning BIC')
 parser.add_argument('--batch_size', default = 16, type = int)
 parser.add_argument('--epoch', default = 50, type = int)
 parser.add_argument('--lr', default = 0.001, type = int)
-parser.add_argument('--max_size', default = 2000, type = int)
-parser.add_argument('--total_cls', default = 13, type = int)
+parser.add_argument('--max_size', default = 8000, type = int)
+parser.add_argument('--total_cls', default = 9, type = int)
+parser.add_argument('--incremental_list', default = [4,1,2,3], type = list)
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
     # showGod()
-    trainer = Trainer(args.total_cls)
-    trainer.train(args.batch_size, args.epoch, args.lr, args.max_size)
+    trainer = Trainer(args.total_cls,args.incremental_list)
+    trainer.train_target_apps(args.batch_size, args.epoch, args.lr, args.max_size)
