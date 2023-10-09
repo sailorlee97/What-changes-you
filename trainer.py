@@ -1,5 +1,7 @@
+import pandas as pd
 import torch
 import torchvision
+from sklearn.metrics import classification_report
 from torchvision.models import vgg16
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -11,13 +13,13 @@ from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, ToTen
 from torch.optim.lr_scheduler import LambdaLR, StepLR
 import warnings
 from cnnmodel import CNN, ResNet
+from plot_ml import plot_conf
 
 warnings.filterwarnings("ignore")
 import numpy as np
 from tqdm import tqdm
 from dataset import BatchData, BatchflowData
 from model import PreResNet, BiasLayer
-from cifar import Cifar100
 from FlowFeatures import  flowfeatures
 from exemplar import Exemplar
 from copy import deepcopy
@@ -77,11 +79,7 @@ class Trainer:
             label = label.view(-1).cuda()
             p = self.model(x)
             p, num_output = self.bias_forward_new(p, inc,status)
-
-            if status[inc][0] == 1:
-                pred = p[:, :self.seen_cls - len(status[inc][2])].argmax(dim=-1)
-            else:
-                pred = p[:,:self.seen_cls].argmax(dim=-1)
+            pred = p[:, :self.seen_cls - len(status[inc][2])].argmax(dim=-1)
             pred_leverage = self.inverse_label_mapping(pred ,mappping)
             correct += sum(pred_leverage == label).item()
             wrong += sum(pred_leverage != label).item()
@@ -97,6 +95,9 @@ class Trainer:
         count = 0
         correct = 0
         wrong = 0
+        pred_list = []
+        label_list = []
+
         for i, (x, label) in enumerate(testdata):
             x = x.type(torch.FloatTensor)
             x = x.cuda()
@@ -107,6 +108,25 @@ class Trainer:
             pred_leverage = self.inverse_label_mapping(pred ,mappping)
             correct += sum(pred_leverage == label).item()
             wrong += sum(pred_leverage != label).item()
+
+            pred_list.append(pred_leverage)
+            label_list.append(label)
+
+        pred_py = torch.cat(pred_list, dim=0)
+        label_py = torch.cat(label_list, dim=0)
+
+        pred_arr = pred_py.detach().cpu().numpy()
+        label_arr = label_py.detach().cpu().numpy()
+        print('predict_label : {}'.format(list(set(pred_arr))))
+        print('true_label : {}'.format(list(set(label_arr))))
+        res_key = list(map(str, mappping.keys()))
+        plot_conf(pred_arr, label_arr, res_key, name=inc)
+        report = classification_report(label_arr, pred_arr, digits=4, target_names=res_key, output_dict=True)
+
+        print(report)
+        df = pd.DataFrame(report).transpose()
+        df.to_csv("{}.csv".format(inc), index=True)
+
         acc = correct / (wrong + correct)
         print("Test Acc: {}".format(acc*100))
         self.model.train()
@@ -148,6 +168,7 @@ class Trainer:
         test_xs = []
         test_ys = []
         test_accs = []
+        finetune_accs = []
 
         for inc_i in range(dataset.batch_num):
             """
@@ -195,33 +216,46 @@ class Trainer:
                     print('开始 fine - tune！')
                     # num_classes = status[inc_i][3] - len(status[inc_i][1])  # 假设有11个新类别
                     # self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
-                    self.model.to(self.device)
-                    for param in self.model.parameters():
-                        param.requires_grad = False
-                    # for param in self.model.fc.parameters():
-                    #     param.requires_grad = True
-                    # testdata里面的数据都删了
-                    test_xs = [x for x, y in zip(test_xs, test_ys) if y not in status[inc_i][2] and y not in status[inc_i][1]]
-                    test_ys = [y for y in test_ys if y not in status[inc_i][2] and y not in status[inc_i][1]]
+                    # testdata里面淘汰的数据都删了
+                    test_xs = [x for x, y in zip(test_xs, test_ys) if y not in status[inc_i][2]]
+                    test_ys = [y for y in test_ys if y not in status[inc_i][2]]
                     test_data = DataLoader(BatchflowData(test_xs, test_ys),
                                            batch_size=batch_size, shuffle=False)
 
-                    train_xs_ft = [x for x, y in zip(train_xs, train_ys) if y not in status[inc_i][2] and y not in status[inc_i][1]]
-                    train_ys_ft = [y for y in train_ys if y not in status[inc_i][2] and y not in status[inc_i][1]]
+                    train_xs_ft = [x for x, y in zip(train_xs, train_ys) if y not in status[inc_i][2] ]
+                    train_ys_ft = [y for y in train_ys if y not in status[inc_i][2]]
                     train_ys_ft_new, label_mapping_fine_tune = self.automate_label_mapping(train_ys_ft)
                     train_loader = DataLoader(BatchflowData(train_xs_ft, train_ys_ft_new),
                                             batch_size=batch_size, shuffle=True, drop_last=True)
 
-                    for epoch in range(epoches):
-                        # bias_scheduler.step()
-                        self.model.eval()
+                    self.model.to(self.device)
+                    for param in self.model.parameters():
+                        param.requires_grad = False
+                    for param in self.model.fc.parameters():
+                        param.requires_grad = True
+                    #     先微调模型
+                    for epoch in range(epoches):  # 假设训练5个epoch
+                        scheduler.step()
+                        cur_lr = self.get_lr(optimizer)
+                        print("Current Learning Rate : ", cur_lr)
+                        self.model.train()
                         for _ in range(len(self.bias_layers)):
-                            self.bias_layers[_].train()
-                        # 这里优化老应用的参数，所以选用bias_layer1
-                        self.stage2_status_fine_tune(train_loader, criterion, optim.Adam(self.bias_layers[0].parameters(), lr=0.001),inc_i,status)
-                        if epoch % 50 == 0:
-                            acc = self.test_fine_tine_data(test_data,label_mapping_fine_tune, inc= inc_i, status = status)
-                            test_acc.append(acc)
+                            self.bias_layers[_].eval()
+                        self.stage1_fine_tune(train_loader,criterion, optimizer, inc_i, status, label_mapping_fine_tune)
+
+                    # 参数解冻
+                    for param in self.model.parameters():
+                        param.requires_grad = True
+                    # for epoch in range(epoches*2):
+                    #     # bias_scheduler.step()
+                    #     self.model.eval()
+                    #     for _ in range(len(self.bias_layers)):
+                    #         self.bias_layers[_].train()
+                    #     # 这里优化老应用的参数，所以选用bias_layer1
+                    #     self.stage2_status_fine_tune(train_loader, criterion, optim.Adam(self.bias_layers[0].parameters(), lr=0.001),inc_i,status)
+                    #     if epoch % 50 == 0:
+                    #         acc = self.test_fine_tine_data(test_data,label_mapping_fine_tune, inc= inc_i, status = status)
+                    #         finetune_accs.append(acc)
                     # for epoch in range(epoches):  # 假设训练5个epoch
                     #     # train_data 需要换了 这里的train data里面的label需要删除
                     #     '''
@@ -239,9 +273,6 @@ class Trainer:
                     #     print(f'Epoch [{epoch + 1}/6], Loss: {loss.item():.4f}')
                     self.previous_model = deepcopy(self.model)
 
-                    '''
-                    
-                    '''
                     print('再 bias- incremental')
                     # 把val中的0 去掉
                     # val_x_reduce = [x for x, y in zip(val_x, val_y) if y not in status[inc_i][2] and y not in status[inc_i][1]]
@@ -284,11 +315,12 @@ class Trainer:
                         for _ in range(len(self.bias_layers)):
                             self.bias_layers[_].train()
                         self.stage2_status(val_bias_data, criterion, bias_optimizer,inc_i,status)
-                        if epoch % 50 == 0:
-                            acc = self.test_data(test_data,label_mapping, inc= inc_i, status = status)
-                            test_acc.append(acc)
+                        # if epoch % 50 == 0:
+                        #     acc = self.test_data(test_data,label_mapping, inc= inc_i, status = status)
+                        #     test_acc.append(acc)
+
                     self.previous_model = deepcopy(self.model)
-                    acc = self.test(test_data)
+                    acc = self.test_data(test_data, label_mapping, inc=inc_i, status=status)
                     test_acc.append(acc)
                     test_accs.append(max(test_acc))
                     print(test_accs)
@@ -330,9 +362,9 @@ class Trainer:
                         for _ in range(len(self.bias_layers)):
                             self.bias_layers[_].train()
                         self.stage2_status(val_bias_data, criterion, bias_optimizer, inc_i, status)
-                        if epoch % 50 == 0:
-                            acc = self.test_data(test_data,label_mapping, inc= inc_i, status = status)
-                            test_acc.append(acc)
+                        # if epoch % 50 == 0:
+                        #     acc = self.test_data(test_data,label_mapping, inc= inc_i, status = status)
+                        #     test_acc.append(acc)
                     self.previous_model = deepcopy(self.model)
                     acc =  self.test_data(test_data,label_mapping, inc= inc_i, status = status)
                     test_acc.append(acc)
@@ -366,7 +398,7 @@ class Trainer:
                     for _ in range(len(self.bias_layers)):
                         self.bias_layers[_].eval()
                     self.stage1_status(train_data, criterion, optimizer,inc_i,status)
-                    acc =  self.test_data(test_data,label_mapping, inc= inc_i, status = status)
+                    # acc =  self.test_data(test_data,label_mapping, inc= inc_i, status = status)
                 # if inc_i > 0:
                 #     """
                 #     对偏执层训练，这里可修改
@@ -388,7 +420,8 @@ class Trainer:
                 acc =  self.test_data(test_data,label_mapping, inc= inc_i, status = status)
                 test_acc.append(acc)
                 test_accs.append(max(test_acc))
-                print(test_accs)
+                print('test_accs:',test_accs)
+                # print('finetune_accs',finetune_accs)
 
     def train(self, batch_size, epoches, lr, max_size):
         # 对应的批次增加的数量
@@ -541,6 +574,23 @@ class Trainer:
         out4 = self.bias_layer4(in4)
         # out5 = self.bias_layer5(in5)
         return torch.cat([out1, out2, out3, out4], dim = 1)
+
+    def stage1_fine_tune(self, train_data, criterion, optimizer,inc, status,label_mapping):
+        print("Training ... ")
+        losses_fine_tune = []
+        for i, (x, label) in enumerate(tqdm(train_data)):
+            x = x.type(torch.FloatTensor)
+            x = x.cuda()
+            label = label.view(-1).cuda()
+            p = self.model(x)
+            p, num_output = self.bias_forward_new(p, inc, status)
+            # a = p[:, :self.seen_cls]
+            loss = criterion(p[:,:self.seen_cls - len(status[inc][2])], label)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            losses_fine_tune.append(loss.item())
+        print("stage fine_tune loss :", np.mean(losses_fine_tune))
 
     def stage1_distill_status(self, train_data, optimizer,inc, status,label_mapping):
         print("Training ... ")

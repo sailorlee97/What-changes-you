@@ -2,7 +2,7 @@ import numpy as np
 import os
 from PIL import Image
 from torch.utils.data import Dataset
-import skimage.io as io
+# import skimage.io as io
 import glob
 import numpy as np
 import random

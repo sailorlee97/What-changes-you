@@ -50,9 +50,12 @@ class flowfeatures():
         val = df.groupby('appname').head(1000)
         test = df.groupby('appname').tail(1000)
         # train, val = train_test_split(train, test_size=0.1)
+
         val_labels = val.pop('appname')
         train_labels = train.pop('appname')
+        print("The train is :{}".format(list(set(train_labels))))
         test_labels = test.pop('appname')
+        print("The test is :{}".format(list(set(test_labels))))
         return train.values, test.values, val.values, train_labels, test_labels, val_labels
 
     def initialize(self, first_num=4, second_num=7, third_num=10, total_num=13):
