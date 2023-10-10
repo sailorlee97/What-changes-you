@@ -32,7 +32,7 @@ def plot_confusion_matrix(cm,
 
     if cmap is None:
         cmap = plt.get_cmap('Blues')
-    mpl.use('TkAgg')  # !IMPORTANT
+    mpl.use('Agg')  # !IMPORTANT
 
     plt.figure(figsize=(15, 12))  # (15,12)
     plt.imshow(cm, interpolation='nearest', cmap=cmap)

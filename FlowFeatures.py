@@ -40,7 +40,7 @@ class flowfeatures():
 
     def processdata(self):
 
-        df  = pd.read_csv('./data/newdataframe19.csv')
+        df  = pd.read_csv('./data/newdataframe15.csv')
         scaler = StandardScaler()
         numeric_columns = df.columns[:-1]
         df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
@@ -269,15 +269,16 @@ class flowfeatures():
 
 def process_csv():
 
-    df = pd.read_csv('./data/dataframe24.csv')
+    df = pd.read_csv('./data/dataframe15.csv')
     # class_counts = df['appname'].value_counts()
-    list = ['原神','腾讯会议','网易会议','香肠派对','蛋仔派对']
-    for i in list:
+    del_list = ['QQ音乐','爱奇艺','百度贴吧','金铲铲之战']
+    for i in del_list:
         df = df[df['appname'] != i]
 
     # class_counts = df['appname'].value_counts()
     # print(class_counts)
     df.drop(df.columns[[0]], axis=1, inplace=True)
+
     # propress labels
     labels = df.pop('appname')
     le = preprocessing.LabelEncoder()
@@ -291,7 +292,8 @@ def process_csv():
     WorldNet.write(str(res))
     WorldNet.close()
     result_df = df.groupby('appname').head(11000)
-    result_df.to_csv('./data/newdataframe19.csv',index=False)
+    
+    result_df.to_csv('./data/newdataframe15.csv',index=False)
 
 
 
@@ -301,9 +303,9 @@ if __name__ == '__main__':
     # df  = pd.read_csv('./data/dataframe24.csv')
     # class_counts = df['appname'].value_counts()
     # print(class_counts)
-    ff = flowfeatures()
-    train_groups, val_groups, test_groups, multi_dict = ff.evolveinitialize()
-    print(multi_dict)
+    # ff = flowfeatures()
+    # train_groups, val_groups, test_groups, multi_dict = ff.evolveinitialize()
+    # print(multi_dict)
     # train_groups, val_groups, test_groups = ff.newinitialize()
     # train_groups, val_groups, test_groups = ff.getNextClasses(2)
     # print(len(train_groups))
@@ -318,3 +320,4 @@ if __name__ == '__main__':
     # result_df = dataframe.groupby('appname').head(10000)
     # result_df.to_csv('./data/newdataframe40.csv',index=False)
     # print(numlabel)
+    process_csv()

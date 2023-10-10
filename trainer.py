@@ -174,6 +174,10 @@ class Trainer:
             """
             这一段的作用是更新类别
             """
+            if inc_i>0:
+                torch.save(self.model.state_dict(),'model+{}.pth'.format(inc_i))
+                torch.save(self.bias_layer1.state_dict(),'bias_layer1+{}.pth'.format(inc_i))
+                torch.save(self.bias_layer2.state_dict(), 'bias_layer2+{}.pth'.format(inc_i))
             print(f"Incremental num : {inc_i}")
             train, val, test = dataset.getNextClasses(inc_i)
             print('train:', len(train),'val:', len(val), 'test:', len(test))
@@ -421,6 +425,8 @@ class Trainer:
                 test_acc.append(acc)
                 test_accs.append(max(test_acc))
                 print('test_accs:',test_accs)
+                if inc_i==0:
+                    torch.save(self.model.state_dict(), 'model+{}.pth'.format(inc_i))
                 # print('finetune_accs',finetune_accs)
 
     def train(self, batch_size, epoches, lr, max_size):

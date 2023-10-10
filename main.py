@@ -12,7 +12,7 @@ import argparse
 # torch.cuda.current_device()
 parser = argparse.ArgumentParser(description='Incremental Learning BIC')
 parser.add_argument('--batch_size', default = 16, type = int)
-parser.add_argument('--epoch', default = 50, type = int)
+parser.add_argument('--epoch', default = 300, type = int)
 parser.add_argument('--lr', default = 0.001, type = int)
 parser.add_argument('--max_size', default = 8000, type = int)
 parser.add_argument('--total_cls', default = 9, type = int)
