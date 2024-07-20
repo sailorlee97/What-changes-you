@@ -1,7 +1,11 @@
 if you use parallel computing, please use this code：
-
+two gpus
 ```
 CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --nproc_per_node=2 secondmain.py
+```
+four gpus
+```
+CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 secondmain.py
 ```
 if you find the error: 
 ```
