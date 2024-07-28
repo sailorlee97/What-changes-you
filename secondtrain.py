@@ -73,7 +73,7 @@ class SecondDistributedTrainer:
         self.bias_layers = [layer.to(device_id) for layer in self.bias_layers]
         self.bias_layers = [DDP(layer, device_ids=[device_id], broadcast_buffers=False, find_unused_parameters=True) for
                             layer in self.bias_layers]
-        state_dict = torch.load('./model+0.pth')
+        state_dict = torch.load('./distributedmodel+0.pth')
         model.load_state_dict(state_dict)
         return model, device_id
 
