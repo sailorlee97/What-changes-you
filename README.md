@@ -14,8 +14,12 @@
 ## 🎉 Introduction
 
 ## 🦜 Model
+<div align="center">
+  <img src="./images/workflow.png" width="800px" />
+</div>
 
 ## 🔥 Train
+
 if you use parallel computing, please use this code：
 two gpus
 ```
