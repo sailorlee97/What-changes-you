@@ -52,6 +52,17 @@ and then reuse parallel computing.
 ## 👨‍🏫 Acknowledgement
 This document is the results of the research project funded by National Natural Science Fundation (General Program) Grant No.61972211, China, University Industry Academy Research Innovation Fund No.2021FNA02006, China, Open trial of CENI-based network attack and defense exercise service platform No.2023C0302 and Development of an Ultra-large-scale Ubiquitous Network Quality Monitoring System Based on Trusted Edge Intelligence under Grant SYG202311.
 
+```
+@article{li2025multi,
+  title={Multi-ARCL: Multimodal Adaptive Relay-based Distributed Continual Learning for Encrypted Traffic Classification},
+  author={Li, Zeyi and Liu, Minyao and Wang, Pan and Su, Wangyu and Chang, Tianshui and Chen, Xuejiao and Zhou, Xiaokang},
+  journal={Journal of Parallel and Distributed Computing},
+  pages={105083},
+  year={2025},
+  publisher={Elsevier}
+}
+```
+
 
 ## 🤗 Contact
 
