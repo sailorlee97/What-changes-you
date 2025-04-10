@@ -53,13 +53,18 @@ and then reuse parallel computing.
 This document is the results of the research project funded by National Natural Science Fundation (General Program) Grant No.61972211, China, University Industry Academy Research Innovation Fund No.2021FNA02006, China, Open trial of CENI-based network attack and defense exercise service platform No.2023C0302 and Development of an Ultra-large-scale Ubiquitous Network Quality Monitoring System Based on Trusted Edge Intelligence under Grant SYG202311.
 
 ```
-@article{li2025multi,
-  title={Multi-ARCL: Multimodal Adaptive Relay-based Distributed Continual Learning for Encrypted Traffic Classification},
-  author={Li, Zeyi and Liu, Minyao and Wang, Pan and Su, Wangyu and Chang, Tianshui and Chen, Xuejiao and Zhou, Xiaokang},
-  journal={Journal of Parallel and Distributed Computing},
-  pages={105083},
-  year={2025},
-  publisher={Elsevier}
+@article{LI2025105083,
+title = {Multi-ARCL: Multimodal adaptive relay-based distributed continual learning for encrypted traffic classification},
+journal = {Journal of Parallel and Distributed Computing},
+volume = {201},
+pages = {105083},
+year = {2025},
+issn = {0743-7315},
+doi = {https://doi.org/10.1016/j.jpdc.2025.105083},
+url = {https://www.sciencedirect.com/science/article/pii/S0743731525000504},
+author = {Zeyi Li and Minyao Liu and Pan Wang and Wangyu Su and Tianshui Chang and Xuejiao Chen and Xiaokang Zhou},
+keywords = {Encrypted traffic classification, Continual learning, Machine unlearning, Distributed learning, Multimodal learning},
+abstract = {Encrypted Traffic Classification (ETC) using Deep Learning (DL) faces two bottlenecks: homogeneous network traffic representation and ineffective model updates. Currently, multimodal-based DL combined with the Continual Learning (CL) approaches mitigate the above problems but overlook silent applications, whose traffic is absent due to guideline violations leading developers to cease their operation and maintenance. Specifically, silent applications accelerate the decay of model stability, while new and active applications challenge model plasticity. This paper presents Multi-ARCL, a multimodal adaptive replay-based distributed CL framework for ETC. The framework prioritizes using crypto-semantic information from flows' payload and flows' statistical features to represent. Additionally, the framework proposes an adaptive relay-based continual learning method that effectively eliminates silent neurons and retrains new samples and a limited subset of old ones. Exemplars of silent applications are selectively removed during new task training. To enhance training efficiency, the framework uses distributed learning to quickly address the stability-plasticity dilemma and reduce the cost of storing silent applications. Experiments show that ARCL outperforms state-of-the-art methods, with an accuracy improvement of over 8.64% on the NJUPT2023 dataset.}
 }
 ```
 
